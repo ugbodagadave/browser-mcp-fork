@@ -1,0 +1,42 @@
+{
+  "manifest_version": 3,
+  "name": "Agent360 Browser MCP",
+  "version": "1.26.0",
+  "description": "Control your real Chrome from Claude Code — navigate, click, fill, screenshot, clipboard, solve CAPTCHAs. 41 tools, multi-session.",
+  "permissions": [
+    "clipboardRead",
+    "clipboardWrite",
+    "tabs",
+    "tabGroups",
+    "cookies",
+    "scripting",
+    "activeTab",
+    "storage",
+    "alarms",
+    "offscreen",
+    "notifications",
+    "webNavigation",
+    "debugger"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "icons": {
+    "16": "icons/icon-16.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' ws://127.0.0.1:* http://127.0.0.1:*"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "48": "icons/icon-48.png"
+    }
+  }
+}

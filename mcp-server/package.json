@@ -1,0 +1,60 @@
+{
+  "name": "@agent360/browser-mcp",
+  "version": "1.27.0",
+  "description": "Browser MCP \u2014 give your AI agent a real, logged-in Chrome: test authenticated apps, read 2FA codes from Gmail, scrape behind logins, solve CAPTCHAs. 34 tools, multi-session, human-in-the-loop. Fork with multi-partition support (browser_partition_new/list/close, per-call partition routing) for parallel agent isolation.",
+  "mcpName": "io.github.Agent360dk/browser-mcp",
+  "type": "module",
+  "main": "index.js",
+  "bin": {
+    "browser-mcp": "./bin/cli.js"
+  },
+  "files": [
+    "index.js",
+    "tools.js",
+    "bin/",
+    "extension/",
+    "README.md"
+  ],
+  "scripts": {
+    "start": "node index.js",
+    "publish:cws": "../scripts/publish-cws.sh",
+    "publish:cws:draft": "../scripts/publish-cws.sh --draft"
+  },
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "model-context-protocol",
+    "browser",
+    "browser-mcp",
+    "browser-automation",
+    "chrome",
+    "chrome-extension",
+    "claude",
+    "claude-code",
+    "ai-agent",
+    "captcha",
+    "captcha-solver",
+    "human-in-the-loop",
+    "web-automation",
+    "playwright-alternative",
+    "selenium-alternative"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "author": {
+    "name": "Agent360",
+    "email": "hello@agent360.dk",
+    "url": "https://agent360.dk"
+  },
+  "license": "MIT",
+  "homepage": "https://browsermcp.dev",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Agent360dk/browser-mcp.git"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.28.0",
+    "ws": "^8.18.0"
+  }
+}
