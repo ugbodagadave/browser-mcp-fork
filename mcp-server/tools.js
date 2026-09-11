@@ -603,3 +603,46 @@ TOOLS.push(
     },
   },
 );
+
+TOOLS.push(
+  {
+    name: 'browser_snapshot',
+    description: 'Read the page as a compact accessibility snapshot: one line per visible interactive element or heading, with a selector hint (->) to use with browser_click/browser_fill. Token-cheap default observation; use screenshots only for visual proof. Refs are per-snapshot, not stable across calls.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        max_nodes: { type: 'number', description: 'Max elements to include (default 250, cap 1000)' },
+        root: { type: 'string', description: 'Optional CSS selector scoping the snapshot to a subtree' },
+      },
+    },
+  },
+  {
+    name: 'browser_auth_save',
+    description: 'Save the current tab origin\'s login state (cookies + localStorage + sessionStorage) to a named auth profile for reuse. Secret values are stored only in the profile file (0600), never echoed.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: 'Profile name (default: "default")' },
+        domains: { type: 'array', description: 'Cookie domains to capture (default: active tab host and dot-host)' },
+        include_storage: { type: 'boolean', description: 'Also capture local/session storage (default true)' },
+      },
+    },
+  },
+  {
+    name: 'browser_auth_load',
+    description: 'Restore a named auth profile: sets cookies, navigates to url (or the saved origin), restores storage, reloads so the app boots authenticated. Confirm login with browser_snapshot afterwards.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: 'Profile name (default: "default")' },
+        url: { type: 'string', description: 'URL to load after restoring (default: saved origin)' },
+      },
+    },
+  },
+);
+
+for (const t of TOOLS) {
+  if (!t.inputSchema) t.inputSchema = { type: 'object', properties: {} };
+  if (!t.inputSchema.properties) t.inputSchema.properties = {};
+  if (!('partition' in t.inputSchema.properties)) t.inputSchema.properties.partition = PARTITION_PROP;
+}

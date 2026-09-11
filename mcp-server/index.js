@@ -18,6 +18,9 @@ import { dirname, join, resolve } from 'path';
 import { fileURLToPath } from 'url';
 import { readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { TOOLS, PROVIDER_PAGES } from './tools.js';
+import { buildSnapshotCode, snapshotRun } from './snapshot.js';
+import { authSave, authLoad } from './auth.js';
+import { verifyResult, captureClickPre } from './verify.js';
 
 // Read version from package.json — single source of truth, never drifts
 const PKG_VERSION = JSON.parse(
@@ -194,6 +197,16 @@ A partition is an isolated browser session: its own Chrome tab group and its own
 - Pass partition: <number> in EVERY browser tool call made by the agent that owns it. Omitting it targets the default partition.
 - browser_partition_list shows all partitions; browser_partition_close releases one when its agent is done.
 
+## Observation
+- browser_snapshot is the default way to read a page: compact, token-cheap, with selector hints (->). Screenshots are for visual proof, not routine observation. Refs are per-snapshot.
+
+## Auth profiles
+- browser_auth_save/load persist a target's login state (cookies + storage) to a named profile. Login once, reuse across runs. Load account A in one partition and B in another for two-account checks.
+
+## Verified actions
+- fill/select/combobox/date/navigate report verified:true plus the observed effect. A fill/select with verified:false means the field did NOT take the value: do not retry blindly, snapshot and re-target.
+- click reports its observed effect (url/tabs/target/content signals): a miss report with no observed effect stays ok:false; an observed effect overrides a miss report.
+
 ## Authentication flows
 1. Navigate to login page
 2. Use browser_ask_user with fields for email/password
@@ -338,6 +351,28 @@ mcpServer.setRequestHandler(CallToolRequestSchema, async (request) => {
       return handlePartitionClose(args);
     }
 
+    if (name === 'browser_snapshot') {
+      const { partition: snapPart } = args || {};
+      return await snapshotRun(
+        (m, p, t, part) => sendToExtension(m, p, t, part ?? null),
+        args, snapPart ?? null,
+      );
+    }
+    if (name === 'browser_auth_save') {
+      const { partition: savePart } = args || {};
+      return await authSave(
+        (m, p, t, part) => sendToExtension(m, p, t, part ?? null),
+        args, savePart ?? null,
+      );
+    }
+    if (name === 'browser_auth_load') {
+      const { partition: loadPart } = args || {};
+      return await authLoad(
+        (m, p, t, part) => sendToExtension(m, p, t, part ?? null),
+        args, loadPart ?? null,
+      );
+    }
+
     const method = methodMap[name];
     if (!method) {
       return { content: [{ type: 'text', text: `Unknown tool: ${name}` }], isError: true };
@@ -345,9 +380,17 @@ mcpServer.setRequestHandler(CallToolRequestSchema, async (request) => {
 
     // Strip the routing param; the extension never sees it.
     const { partition, ...rest } = args || {};
+    const call = (m, p, t, part) => sendToExtension(m, p, t, part ?? null);
 
     const timeout = method === 'ask_user' ? (rest.timeout || 120000) + 5000 :
                     method === 'solve_captcha' ? 60000 : 30000;
+
+    // Click verification needs pre-action state (url, tab count, target sig).
+    let pre = null;
+    if (name === 'browser_click') {
+      try { pre = await captureClickPre(call, rest, partition ?? null); } catch {}
+    }
+
     const result = await sendToExtension(method, rest, timeout, partition ?? null);
 
     if (name === 'browser_screenshot' && result?.image) {
@@ -372,7 +415,7 @@ mcpServer.setRequestHandler(CallToolRequestSchema, async (request) => {
     }
 
     const response = {
-      content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+      content: [{ type: 'text', text: JSON.stringify(await verifyResult(name, rest, result, call, partition ?? null, pre), null, 2) }],
     };
 
     return response;
