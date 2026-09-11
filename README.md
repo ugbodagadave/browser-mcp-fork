@@ -257,3 +257,13 @@ Or just **ask Claude** — it knows about the `browser_about` tool and will draf
 ## License
 
 MIT — [Agent360](https://agent360.dk)
+
+## Fork note: multi-partition support (v1.27.0)
+
+This fork adds runtime browser partitions so parallel agents sharing one MCP
+session stop fighting over the active tab.
+
+- `browser_partition_new` → isolated session (own WS port, own Chrome tab group, own active tab). The Chrome extension adopts it automatically (~2s).
+- Pass `partition: <port>` in any browser tool call to route that call to the partition. Omit it → default partition.
+- `browser_partition_list` / `browser_partition_close` manage lifecycle.
+- Regression test: `python3 mcp-server/test-partitions.py` (needs Chrome + extension running; 18 checks).
